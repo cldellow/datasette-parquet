@@ -91,7 +91,7 @@ This is a loose journal of things I ran into:
   to transpile queries into DuckDB's dialect.
     - In homage to MySQL, SQLite supports string literals delimited by double
       quotes. Datasette uses this feature, see https://github.com/simonw/datasette/issues/2001
-    - In homage to SQL Server, SQLite supports quoting table names with square
+    - In homage to SQL Server, SQLite supports quoting identifiers with square
       brackets. Datasette uses this feature, see https://github.com/simonw/datasette/issues/2013
 
 - Unfortunately, using sqlglot brings its own challenges: it doesn't recognize
