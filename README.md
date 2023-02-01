@@ -51,7 +51,7 @@ The `sales` view will be the union of all the files in that directory -- this wo
 
 > **Note**
 >
-> You will likely want to disable facets, or install [datasette-ui-extras](https://github.com/cldellow/datasette-ui-extras), which disables facet suggestions.
+> You will likely want to [disable facet suggestions from the CLI](https://docs.datasette.io/en/stable/settings.html#suggest-facets), or install [datasette-ui-extras](https://github.com/cldellow/datasette-ui-extras), which disables facet suggestions.
 > See the note on `No timeouts` for more information.
 
 > **Warning**
