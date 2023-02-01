@@ -5,5 +5,15 @@
         "directory": "./trove"
       }
     }
+  },
+  "databases": {
+    "trove": {
+      "queries": {
+        "export": {
+          "sql": "COPY (select geo_id, name, ascii_name, latitude, longitude, feature_class, feature_code, country, cc2, admin1, admin2, admin3, admin4, population, elevation, dem, timezone, updated_at from cities500) TO 'output.csv' (FORMAT CSV);",
+          "write": true
+        }
+      }
+    }
   }
 }

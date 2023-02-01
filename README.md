@@ -95,6 +95,11 @@ This is a loose journal of things I ran into:
 - Unfortunately, using sqlglot brings its own challenges: it doesn't recognize
   the `GLOB` operator, see https://github.com/tobymao/sqlglot/issues/1066
 
+- Datasette passes extraneous parameters to the sqlite3 connection. A writable
+  canned query will post a `csrftoken` for security purposes, which ends up
+  as part of the query parameters. DuckDB is strict on the parameters matching
+  the SQL query, so it fails.
+
 - Datasette expects some SQLite internals to be around, like certain `PRAGMA ...` functions,
   or the shape of the `EXPLAIN` output. We work around this by detecting those
   queries and telling bald-faced lies to Datasette.

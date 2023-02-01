@@ -18,6 +18,10 @@ class Row:
             return self.tpl[self.columns[key]]
 
 def fixup_params(sql, parameters):
+    if isinstance(parameters, dict) and 'csrftoken' in parameters:
+        # Writable canned queries send this ... probably a bug?
+        parameters.pop('csrftoken')
+
     # Sometimes we skip queries that DuckDB can't handle, eg DATE(...) facet queries.
     # If the old query had parameters, sending them with the new query will
     # cause an assertion to fail. So return an empty list of parameters.
@@ -46,11 +50,11 @@ class ProxyCursor:
             self.cursor = self.conn.cursor()
 
     def execute(self, sql, parameters=None):
-        #print('# {}'.format(sql))
+        #print('# params={} sql={}'.format(parameters, sql))
         sql = rewrite(sql)
         sql, parameters = fixup_params(sql, parameters)
 
-        #print('params={} sql={}'.format(parameters, sql))
+        #print('## params={} sql={}'.format(parameters, sql))
         t = time.time()
         rv = self.cursor.execute(sql, parameters)
         #print('took {}'.format(time.time() - t))
@@ -87,10 +91,17 @@ class ProxyConnection:
         conn = duckdb.connect()
         self.conn = conn
 
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type,exc_value, exc_traceback):
+        pass
+
     def execute(self, sql, parameters=None):
-        #print('! {}'.format(sql))
+        #print('! params={} sql={}'.format(parameters, sql))
         sql = rewrite(sql)
         sql, parameters = fixup_params(sql, parameters)
+        #print('!! params={} sql={}'.format(parameters, sql))
         rv = self.conn.execute(sql, parameters)
 
         return ProxyCursor(self.conn, rv)
@@ -127,6 +138,18 @@ class DuckDatabase(Database):
         def in_thread():
             return fn(self.conn)
 
+        return await asyncio.get_event_loop().run_in_executor(
+            self.ds.executor, in_thread
+        )
+
+    async def execute_write_fn(self, fn, block=True):
+        if self.ds.executor is None:
+            raise Exception('non-threaded mode not supported')
+
+        def in_thread():
+            return fn(self.conn)
+
+        # We lie, we'll always block.
         return await asyncio.get_event_loop().run_in_executor(
             self.ds.executor, in_thread
         )

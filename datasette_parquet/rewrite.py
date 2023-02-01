@@ -7,7 +7,7 @@ NO_OP_SQL = 'SELECT 0 WHERE 1 = 0'
 
 
 def rewrite(sql):
-    #print('rewrite: {}'.format(sql))
+    # print('rewrite: {}'.format(sql))
 
     if ' DATE(' in sql or ' date(' in sql:
         sql = NO_OP_SQL
@@ -69,7 +69,7 @@ def rewrite(sql):
     # Transpile queries, eg [test] is not a valid way to quote a table
     # in DuckDB.
     #print('before transpile: {}'.format(sql))
-    if not sql.startswith('PRAGMA'):
+    if not sql.startswith('PRAGMA') and not sql.startswith('COPY '):
         sql = sqlglot.transpile(sql, read='sqlite', write='duckdb')[0]
 
     #print('after transpile: {}'.format(sql))
