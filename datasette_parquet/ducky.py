@@ -46,11 +46,15 @@ class ProxyCursor:
             self.cursor = self.conn.cursor()
 
     def execute(self, sql, parameters=None):
+        #print('# {}'.format(sql))
         sql = rewrite(sql)
         sql, parameters = fixup_params(sql, parameters)
 
         #print('params={} sql={}'.format(parameters, sql))
-        return self.cursor.execute(sql, parameters)
+        t = time.time()
+        rv = self.cursor.execute(sql, parameters)
+        #print('took {}'.format(time.time() - t))
+        return rv
 
     def fetchall(self):
         tpls = self.cursor.fetchall()
@@ -84,6 +88,7 @@ class ProxyConnection:
         self.conn = conn
 
     def execute(self, sql, parameters=None):
+        #print('! {}'.format(sql))
         sql = rewrite(sql)
         sql, parameters = fixup_params(sql, parameters)
         rv = self.conn.execute(sql, parameters)
