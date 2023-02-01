@@ -5,6 +5,7 @@ import re
 import sqlite3
 import sqlglot
 import duckdb
+from .ddl import create_views
 
 table_xinfo_re = re.compile('^PRAGMA table_xinfo[(](.+)[)]')
 
@@ -163,23 +164,7 @@ class ProxyCursor:
 
 class ProxyConnection:
     def __init__(self):
-        pass
-
         conn = duckdb.connect()
-        #conn.execute("CREATE VIEW csv AS SELECT * FROM '/home/cldellow/Downloads/sep-16-18.csv'")
-        conn.execute("CREATE VIEW csv AS SELECT * FROM read_csv_auto('/home/cldellow/Downloads/sep-16-18.csv', header=true)")
-        #conn.execute("CREATE VIEW jsonl AS SELECT x->>'author' AS author, x->>'last_published_at' AS last_published_at, x->>'articles' AS articles, x->>'emails' AS emails, x->>'about_text' AS about_text FROM read_json_objects('/home/cldellow/Downloads/x10.jsonl') x")
-        conn.execute("CREATE VIEW jsonl AS SELECT x.json->>'author' AS author, x.json->>'last_published_at' AS last_published_at, x.json->>'articles' AS articles, x.json->>'emails' AS emails, x.json->>'about_text' AS about_text FROM read_json_objects('/home/cldellow/Downloads/x10.jsonl') x")
-        #conn.execute("CREATE VIEW jsonl AS SELECT json_extract_string(x.json, 'author') FROM read_json_objects('/home/cldellow/Downloads/x10.jsonl') x")
-        #conn.execute("CREATE VIEW jsonl AS WITH xs AS (SELECT x.json AS value FROM read_json_objects('/home/cldellow/Downloads/x10.jsonl') x) SELECT json_extract_string(value, 'author') AS author FROM xs")
-        #conn.execute("CREATE VIEW csv AS SELECT * FROM read_csv('/home/cldellow/Downloads/sep-16-18.csv', delim=',', header=True, columns={'timestamp': 'DATE', 'mode': 'VARCHAR', 'conn': 'VARCHAR', 'corr': 'VARCHAR'})")
-        conn.execute("CREATE VIEW test AS SELECT * FROM 'userdata1.parquet'")
-        print(time.time())
-        conn.execute("CREATE VIEW taxi1 AS SELECT * FROM 'yellow_tripdata_2022-01.parquet'")
-        #conn.execute("CREATE TABLE taxi1 AS SELECT * FROM 'yellow_tripdata_2022-01.parquet'")
-        #conn.execute("CREATE TABLE taxi AS SELECT * FROM 'yellow_tripdata_2022*.parquet'")
-        conn.execute("CREATE VIEW taxi AS SELECT * FROM 'yellow_tripdata_2022*.parquet'")
-        print(time.time())
         self.conn = conn
 
     def execute(self, sql, parameters=None):
@@ -204,12 +189,15 @@ class ProxyConnection:
         return ProxyCursor(self.conn)
 
 class DuckDatabase(Database):
-    def __init__(self, ds):
+    def __init__(self, ds, directory):
         super().__init__(ds)
 
         #conn = duckdb.connect()
         #conn.set_progress_handler = set_progress_handler
         conn = ProxyConnection()
+
+        for create_view_stmt in create_views(directory):
+            conn.conn.execute(create_view_stmt)
 
         self.conn = conn
         pass

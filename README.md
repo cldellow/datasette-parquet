@@ -32,12 +32,10 @@ like this in your `metadata.json`:
 
 ```
 {
-  "databases": {
-    "trove": {
-      "plugins": {
-        "datasette-parquet": {
-          "directory": "/mnt/files"
-        }
+  "plugins": {
+    "datasette-parquet": {
+      "trove": {
+        "directory": "/mnt/files"
       }
     }
   }

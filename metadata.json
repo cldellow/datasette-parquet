@@ -1,0 +1,9 @@
+{
+  "plugins": {
+    "datasette-parquet": {
+      "trove": {
+        "directory": "./trove"
+      }
+    }
+  }
+}
