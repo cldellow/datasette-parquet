@@ -60,7 +60,7 @@ The `sales` view will be the union of all the files in that directory -- this wo
 >
 > You know that old canard, that if it walks like a duck and quacks like a duck, it's probably a duck? This plugin tries to teach DuckDB to walk like SQLite and talk like SQLite. That turns out to be ducking hard! If you come across broken features, let me know and I'll try to fix them up.
 
-- No timeouts: A core feature of Datasette is that it's safe to let the unwashed masses run arbitrary queries. This is because the data is immutable, and there are timeouts to prevent runaway CPU usage. DuckDB does not currently support timeouts (LINK TO ISSUE). Think carefully about letting anonymous users use a Datasette instance with this plugin.
+- No timeouts: A core feature of Datasette is that it's safe to let the unwashed masses run arbitrary queries. This is because the data is immutable, and there are timeouts to prevent runaway CPU usage. DuckDB does not currently support timeouts. Think carefully about letting anonymous users use a Datasette instance with this plugin.
 - Joining with existing data: This plugin uses DuckDB, not SQLite. This means that you cannot join against your existing SQLite tables.
 - Read-only: the data in the files can only be queried, not changed.
 - Performance: the files are queried in-place. Performance will be limited by the file type -- parquet files have a zippy binary format, but large CSV and JSONL files might be slow.
@@ -68,10 +68,11 @@ The `sales` view will be the union of all the files in that directory -- this wo
 
 ## Technical notes
 
-This plugin has a mix of accidental complexity (trying to fool Datasette into
-thinking that it's talking to a SQLite plugin) and some essential complexity
-that would still exist even if/when Datasette properly supports alternate
-database backends (strongly typed schema needs different query patterns).
+This plugin has a mix of accidental complexity and essential complexity.
+The essential complexity comes from things like "DuckDB supports a different
+dialect of SQL". The accidental complexity comes from things like "some features
+aren't meant to be monkey-patched into existence, why are you doing this
+to yourself".
 
 This is a loose journal of things I ran into:
 
