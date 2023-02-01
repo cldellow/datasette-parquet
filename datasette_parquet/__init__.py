@@ -13,7 +13,6 @@ def startup(datasette):
         return
 
     for db_name, options in config.items():
-        print('db={} options={}'.format(db_name, options))
         if not 'directory' in options:
             raise Exception('datasette-parquet: expected directory key for db {}'.format(db))
 
