@@ -9,7 +9,7 @@ Support Parquet, CSV and [JSON Lines](https://jsonlines.org/) files in Datasette
 
 There is a demo at https://dux.fly.dev/parquet
 
-Compare a query using [Parquet on DuckDB](https://dux.fly.dev/parquet?sql=select+country%2C+count%28distinct+name+%7C%7C+admin1%29+as+num_cities%2C+count%28distinct+admin1%29+as+num_regions%2C+min%28population%29+as+smallest_city%2C+max%28population%29+as+biggest_city%2C+sum%28population%29+as+population+from+geonames+group+by+1+order+by+1) vs [SQLite](https://dux.fly.dev/geonames?sql=select+country%2C+count%28distinct+name+%7C%7C+admin1%29+as+num_cities%2C+count%28distinct+admin1%29+as+num_regions%2C+min%28population%29+as+smallest_city%2C+max%28population%29+as+biggest_city%2C+sum%28population%29+as+population+from+geonames+group+by+1+order+by+1). The DuckDB query is ~3-5x faster. On a machine with more than 1 core, DuckDB would outperform by an even higher margin.
+Compare a query using [Parquet on DuckDB](https://dux.fly.dev/parquet/geonames_stats) vs the same query on [SQLite](https://dux.fly.dev/geonames/geonames_stats). The DuckDB query is ~3-5x faster. On a machine with more than 1 core, DuckDB would outperform by an even higher margin.
 
 
 ## Installation
