@@ -70,9 +70,9 @@ The `sales` view will be the union of all the files in that directory -- this wo
 
 This plugin has a mix of accidental complexity and essential complexity.
 The essential complexity comes from things like "DuckDB supports a different
-dialect of SQL". The accidental complexity comes from things like "some features
-aren't meant to be monkey-patched into existence, why are you doing this
-to yourself".
+dialect of SQL". The accidental complexity comes from things like "it's
+called the _Law_ of Demeter, Colin, not the Strongly Held Opinion
+of Demeter".
 
 This is a loose journal of things I ran into:
 
