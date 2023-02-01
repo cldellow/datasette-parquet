@@ -66,6 +66,51 @@ The `sales` view will be the union of all the files in that directory -- this wo
 - Performance: the files are queried in-place. Performance will be limited by the file type -- parquet files have a zippy binary format, but large CSV and JSONL files might be slow.
 - Facets: DuckDB supports a different set of syntax than SQLite. This means some Datasette features are incompatible, and will be disabled for DuckDB-backed files.
 
+## Technical notes
+
+This plugin has a mix of accidental complexity (trying to fool Datasette into
+thinking that it's talking to a SQLite plugin) and some essential complexity
+that would still exist even if/when Datasette properly supports alternate
+database backends (strongly typed schema needs different query patterns).
+
+This is a loose journal of things I ran into:
+
+- DuckDB's Python API is similar to the `sqlite3` module's interface, but not
+  the same. Datasette expects to talk to an interface that conforms to `sqlite3`,
+  so this plugin crufts up some proxy objects to give a "convincing" facade.
+  I mostly YOLOd this part. I wouldn't trust it for write queries, or for
+  reading sensitive data.
+    - DuckDB doesn't have the concept of a separate cursor class.
+    - sqlite3's cursor is an iterable
+    - Datasette uses sqlite3.Row objects, which support indexing by name
+    - sqlite3 supports parameterized queries like `execute('SELECT :p', {'p': 123})`.
+      These need to be rewritten to use numbered parameters and a list.
+
+- SQLite supports slightly different syntax than DuckDB. We use [sqlglot](https://github.com/tobymao/sqlglot)
+  to transpile queries into DuckDB's dialect.
+    - In homage to MySQL, SQLite supports string literals delimited by double
+      quotes. Datasette uses this feature, see https://github.com/simonw/datasette/issues/2001
+    - In homage to SQL Server, SQLite supports quoting table names with square
+      brackets. Datasette uses this feature, see https://github.com/simonw/datasette/issues/2013
+
+- Unfortunately, using sqlglot brings its own challenges: it doesn't recognize
+  the `GLOB` operator, see https://github.com/tobymao/sqlglot/issues/1066
+
+- Datasette expects some SQLite internals to be around, like certain `PRAGMA ...` functions,
+  or the shape of the `EXPLAIN` output. We work around this by detecting those
+  queries and telling bald-faced lies to Datasette.
+
+- Datasette expects `json_type(...)` to throw a `sqlite3.OperationalError` on invalid
+  JSON, but DuckDB will (of course) throw its own type: `duckdb.InvalidInputException`
+
+- DuckDB is missing some functions from SQLite: `json_each(...)`, `date(...)`
+
+- `rowid` columns in SQLite are stable identifiers. This is not true in DuckDB.
+
+- SQLite's Python interface supports interrupting long-running queries. DuckDB's
+  C API supports this, too, but it has not yet been exposed to the Python API.
+  See https://github.com/duckdb/duckdb/issues/5938 and https://github.com/duckdb/duckdb/pull/3749
+
 ## Development
 
 To set up this plugin locally, first checkout the code. Then create a new virtual environment:
