@@ -2,7 +2,8 @@
   "plugins": {
     "datasette-parquet": {
       "trove": {
-        "directory": "./trove"
+        "directory": "./trove",
+        "watch": true
       },
       "duckdb": {
         "file": "./trove/fixtures.duckdb"

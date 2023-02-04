@@ -61,7 +61,8 @@ like this in your `metadata.json`:
   "plugins": {
     "datasette-parquet": {
       "trove": {
-        "directory": "/data"
+        "directory": "/data",
+        "watch": true
       }
     }
   }
@@ -72,6 +73,9 @@ Then launch Datasette via `datasette --metadata metadata.json`
 
 You will have 5 views in the `trove` database: `census`, `books`, `tweets`, `geonames` and `sales`.
 The `sales` view will be the union of all the files in that directory -- this works for all of the file types, not just Parquet.
+
+Because you passed the `watch` option with a value of `true`, Datasette will automatically discover when
+files are added or removed, and create or remove views as needed.
 
 ### Common options
 

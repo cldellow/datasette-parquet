@@ -1,150 +1,71 @@
 import asyncio
-import time
-import sqlite3
 import duckdb
+import logging
+from .debounce import debounce
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler, LoggingEventHandler
 from datasette.database import Database, Results
 from .ddl import create_views
-from .rewrite import rewrite, NO_OP_SQL
+from .winging_it import ProxyConnection
 
-class Row:
-    def __init__(self, columns, tpl):
-        self.columns = columns
-        self.tpl = tpl
+class SchemaEventHandler(FileSystemEventHandler):
+    """React to files being added/removed from the watched directory."""
 
-    def __getitem__(self, key):
-        if isinstance(key, int):
-            return self.tpl[key]
-        else:
-            return self.tpl[self.columns[key]]
+    def __init__(self, reload):
+        super().__init__()
 
-def fixup_params(sql, parameters):
-    if isinstance(parameters, dict):
-        # On the custom SQL page, Datasette jams any query parameter it finds
-        # into the parameters for the backend. DuckDB is strict on unexpected
-        # parameters, so try to remove them
+        self.reload = reload
 
-        new_parameters = {}
-        for k, v in parameters.items():
-            if ':{}'.format(k) in sql:
-                new_parameters[k] = v
+    @debounce(1)
+    def on_event(self):
+        self.reload()
 
-        parameters = new_parameters
+    def on_moved(self, event):
+        super().on_moved(event)
+        self.on_event()
 
-    # Sometimes we skip queries that DuckDB can't handle, eg DATE(...) facet queries.
-    # If the old query had parameters, sending them with the new query will
-    # cause an assertion to fail. So return an empty list of parameters.
-    if sql == NO_OP_SQL:
-        return sql, []
+    def on_created(self, event):
+        super().on_created(event)
+        self.on_event()
 
-    if isinstance(parameters, (tuple, list)):
-        return sql, parameters
-    else:
-        new_params = []
-        for i, (k, v) in enumerate((parameters or {}).items()):
-            new_params.append(v)
-            sql = sql.replace(':' + k, '${}'.format(i + 1))
+    def on_deleted(self, event):
+        super().on_deleted(event)
+        self.on_event()
 
-        #print('new sql: {}'.format(sql))
-        #print('new params: {}'.format(new_params))
-        return sql, new_params
+    def on_modified(self, event):
+        super().on_modified(event)
+        self.on_event()
 
-class ProxyCursor:
-    def __init__(self, conn, existing_cursor=None):
-        self.conn = conn
+def create_directory_connection(directory):
+    raw_conn = duckdb.connect()
+    conn = ProxyConnection(raw_conn)
 
-        if existing_cursor:
-            self.cursor = existing_cursor
-        else:
-            self.cursor = self.conn.cursor()
+    for create_view_stmt in create_views(directory):
+        conn.conn.execute(create_view_stmt)
 
-    def execute(self, sql, parameters=None):
-        #print('# params={} sql={}'.format(parameters, sql))
-        sql = rewrite(sql)
-        sql, parameters = fixup_params(sql, parameters)
-
-        #print('## params={} sql={}'.format(parameters, sql))
-        t = time.time()
-        rv = self.cursor.execute(sql, parameters)
-        #print('took {}'.format(time.time() - t))
-        return rv
-
-    def fetchone(self):
-        raise Exception('fetchone')
-
-    def fetchmany(self, size=1):
-        tpls = self.cursor.fetchmany(size)
-        columns = {}
-        for i, x in enumerate(self.cursor.description):
-            columns[x[0]] = i
-
-        return [Row(columns, tpl) for tpl in tpls]
-
-    def fetchall(self):
-        tpls = self.cursor.fetchall()
-        columns = {}
-        for i, x in enumerate(self.cursor.description):
-            columns[x[0]] = i
-
-        return [Row(columns, tpl) for tpl in tpls]
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        rv = self.cursor.fetchone()
-
-        if rv == None:
-            raise StopIteration
-
-        columns = {}
-        for i, x in enumerate(self.cursor.description):
-            columns[x[0]] = i
-        rv = Row(columns, rv)
-        return rv
-
-    def __getattr__(self, name):
-        return getattr(self.cursor, name)
-
-class ProxyConnection:
-    def __init__(self, conn):
-        self.conn = conn
-
-    def __enter__(self):
-        pass
-
-    def __exit__(self, exc_type,exc_value, exc_traceback):
-        pass
-
-    def execute(self, sql, parameters=None):
-        #print('! params={} sql={}'.format(parameters, sql))
-        sql = rewrite(sql)
-        sql, parameters = fixup_params(sql, parameters)
-        #print('!! params={} sql={}'.format(parameters, sql))
-        rv = self.conn.execute(sql, parameters)
-
-        return ProxyCursor(self.conn, rv)
-
-    def fetchall(self):
-        raise Exception('TODO: ProxyConnection.fetchall is not implemented')
-
-    def set_progress_handler(self, handler, n):
-        pass
-
-    def cursor(self):
-        return ProxyCursor(self.conn)
+    return conn
 
 class DuckDatabase(Database):
-    def __init__(self, ds, directory=None, file=None, httpfs=None):
+    def __init__(self, ds, directory=None, file=None, httpfs=None, watch=None):
         super().__init__(ds)
 
         self.engine = 'duckdb'
 
         if directory:
-            raw_conn = duckdb.connect()
-            conn = ProxyConnection(raw_conn)
+            conn = create_directory_connection(directory)
 
-            for create_view_stmt in create_views(directory):
-                conn.conn.execute(create_view_stmt)
+            logging.basicConfig(level=logging.INFO,
+                format='%(asctime)s - %(message)s',
+                datefmt='%Y-%m-%d %H:%M:%S')
+
+            def reload():
+                self.conn.conn.close()
+                self.conn = create_directory_connection(directory)
+
+            event_handler = SchemaEventHandler(reload)
+            observer = Observer()
+            observer.schedule(event_handler, directory, recursive=True)
+            observer.start()
         elif file:
             raw_conn = duckdb.connect(file, read_only=True)
             conn = ProxyConnection(raw_conn)
