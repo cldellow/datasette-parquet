@@ -30,4 +30,4 @@ async def test_plugin_is_installed(datasette):
 async def test_json_works(datasette):
     response = await datasette.client.get("/trove/fixtures.json?_size=max&_labels=on&_shape=objects")
     assert response.status_code == 200
-    assert response.json()['rows'] == [{'date': '2023-01-01' }]
+    assert response.json()['rows'] == [{'date': '2023-01-01', 'ts': '2023-01-02T03:04:05' }]
