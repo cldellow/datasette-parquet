@@ -1,5 +1,5 @@
 from datasette.app import Datasette
-from tests.create_db import create_dbs
+from .create_db import create_dbs
 import pytest
 
 @pytest.fixture(scope="session")
