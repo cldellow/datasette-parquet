@@ -23,13 +23,12 @@ def fixup_params(sql, parameters):
         # into the parameters for the backend. DuckDB is strict on unexpected
         # parameters, so try to remove them
 
-        to_remove = []
-        for k in parameters.keys():
-            if not ':{}'.format(k) in sql:
-                to_remove.append(k)
+        new_parameters = {}
+        for k, v in parameters.items():
+            if ':{}'.format(k) in sql:
+                new_parameters[k] = v
 
-        for k in to_remove:
-            parameters.pop(k)
+        parameters = new_parameters
 
     # Sometimes we skip queries that DuckDB can't handle, eg DATE(...) facet queries.
     # If the old query had parameters, sending them with the new query will
