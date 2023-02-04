@@ -68,6 +68,17 @@ class ProxyCursor:
         #print('took {}'.format(time.time() - t))
         return rv
 
+    def fetchone(self):
+        raise Exception('fetchone')
+
+    def fetchmany(self, size=1):
+        tpls = self.cursor.fetchmany(size)
+        columns = {}
+        for i, x in enumerate(self.cursor.description):
+            columns[x[0]] = i
+
+        return [Row(columns, tpl) for tpl in tpls]
+
     def fetchall(self):
         tpls = self.cursor.fetchall()
         columns = {}
@@ -95,8 +106,7 @@ class ProxyCursor:
         return getattr(self.cursor, name)
 
 class ProxyConnection:
-    def __init__(self):
-        conn = duckdb.connect()
+    def __init__(self, conn):
         self.conn = conn
 
     def __enter__(self):
@@ -124,13 +134,20 @@ class ProxyConnection:
         return ProxyCursor(self.conn)
 
 class DuckDatabase(Database):
-    def __init__(self, ds, directory):
+    def __init__(self, ds, directory=None, file=None):
         super().__init__(ds)
 
-        conn = ProxyConnection()
+        if directory:
+            raw_conn = duckdb.connect()
+            conn = ProxyConnection(raw_conn)
 
-        for create_view_stmt in create_views(directory):
-            conn.conn.execute(create_view_stmt)
+            for create_view_stmt in create_views(directory):
+                conn.conn.execute(create_view_stmt)
+        elif file:
+            raw_conn = duckdb.connect(file, read_only=True)
+            conn = ProxyConnection(raw_conn)
+        else:
+            raise Exception('must specify directory or file')
 
         #print(conn.conn.execute('install httpfs;').fetchall())
         #print(conn.conn.execute('load httpfs;').fetchall())

@@ -17,9 +17,15 @@ def startup(datasette):
     monkey_patch()
 
     for db_name, options in config.items():
-        if not 'directory' in options:
-            raise Exception('datasette-parquet: expected directory key for db {}'.format(db))
+        if not 'directory' in options and not 'file' in options:
+            raise Exception('datasette-parquet: expected directory or file key for db {}'.format(db))
 
-        directory = options['directory']
-        db = DuckDatabase(datasette, directory)
-        datasette.add_database(db, db_name)
+        if 'directory' in options:
+            directory = options['directory']
+            db = DuckDatabase(datasette, directory=directory)
+            datasette.add_database(db, db_name)
+        else:
+            file = options['file']
+            db = DuckDatabase(datasette, file=file)
+            datasette.add_database(db, db_name)
+

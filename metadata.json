@@ -3,6 +3,9 @@
     "datasette-parquet": {
       "trove": {
         "directory": "./trove"
+      },
+      "duckdb": {
+        "file": "./trove/fixtures.duckdb"
       }
     }
   },

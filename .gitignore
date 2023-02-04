@@ -12,3 +12,4 @@ dist
 build
 yellow_*
 slow_query.py
+fixtures/
