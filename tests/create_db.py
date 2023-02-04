@@ -7,7 +7,12 @@ def sql():
     f.close()
     return rv
 
-def create_dbs(prefix = 'trove'):
+def create_dbs(prefix = './trove'):
+    try:
+        os.makedirs(prefix)
+    except FileExistsError:
+        pass
+
     fname = '{}/fixtures.duckdb'.format(prefix)
     try:
         os.remove(fname)
