@@ -69,7 +69,7 @@ def rewrite(sql):
     # Transpile queries, eg [test] is not a valid way to quote a table
     # in DuckDB.
     #print('before transpile: {}'.format(sql))
-    if not sql.startswith('PRAGMA') and not sql.startswith('COPY '):
+    if not sql.startswith('PRAGMA') and not sql.startswith('COPY ') and not "from '" in sql:
         sql = sqlglot.transpile(sql, read='sqlite', write='duckdb')[0]
 
     #print('after transpile: {}'.format(sql))

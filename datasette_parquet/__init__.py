@@ -1,5 +1,4 @@
 from datasette import hookimpl
-from .ducky import DuckDatabase
 
 PLUGIN_NAME = 'datasette-parquet'
 
@@ -11,6 +10,11 @@ def startup(datasette):
 
     if not config:
         return
+
+    from .ducky import DuckDatabase
+    from .patches import monkey_patch
+
+    monkey_patch()
 
     for db_name, options in config.items():
         if not 'directory' in options:

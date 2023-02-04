@@ -124,6 +124,9 @@ class DuckDatabase(Database):
         for create_view_stmt in create_views(directory):
             conn.conn.execute(create_view_stmt)
 
+        #print(conn.conn.execute('install httpfs;').fetchall())
+        #print(conn.conn.execute('load httpfs;').fetchall())
+
         self.conn = conn
 
     @property
