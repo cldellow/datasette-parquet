@@ -120,6 +120,9 @@ This is a loose journal of things I ran into:
   C API supports this, too, but it has not yet been exposed to the Python API.
   See https://github.com/duckdb/duckdb/issues/5938 and https://github.com/duckdb/duckdb/pull/3749
 
+- Datasette's CustomJSONEncoder only expects objects of the sort that SQLite can
+  store. DuckDB has native support the `date` type, which requires patching.
+
 ## Development
 
 To set up this plugin locally, first checkout the code. Then create a new virtual environment:
