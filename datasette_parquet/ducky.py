@@ -137,6 +137,8 @@ class DuckDatabase(Database):
     def __init__(self, ds, directory=None, file=None, httpfs=None):
         super().__init__(ds)
 
+        self.engine = 'duckdb'
+
         if directory:
             raw_conn = duckdb.connect()
             conn = ProxyConnection(raw_conn)
