@@ -32,7 +32,7 @@ setup(
     version=VERSION,
     packages=["datasette_parquet"],
     entry_points={"datasette": ["parquet = datasette_parquet"]},
-    install_requires=["datasette", "duckdb", "sqlglot", "watchdog", 'git+https://github.com/salesforce/decorator-operations'],
+    install_requires=["datasette", "duckdb", "sqlglot", "watchdog"],
     extras_require={"test": ["pytest", "pytest-asyncio", "pytest-watch"]},
     python_requires=">=3.7",
 )
