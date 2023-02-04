@@ -18,9 +18,18 @@ class Row:
             return self.tpl[self.columns[key]]
 
 def fixup_params(sql, parameters):
-    if isinstance(parameters, dict) and 'csrftoken' in parameters:
-        # Writable canned queries send this ... probably a bug?
-        parameters.pop('csrftoken')
+    if isinstance(parameters, dict):
+        # On the custom SQL page, Datasette jams any query parameter it finds
+        # into the parameters for the backend. DuckDB is strict on unexpected
+        # parameters, so try to remove them
+
+        to_remove = []
+        for k in parameters.keys():
+            if not ':{}'.format(k) in sql:
+                to_remove.append(k)
+
+        for k in to_remove:
+            parameters.pop(k)
 
     # Sometimes we skip queries that DuckDB can't handle, eg DATE(...) facet queries.
     # If the old query had parameters, sending them with the new query will
