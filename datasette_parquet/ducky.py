@@ -1,6 +1,5 @@
 import asyncio
 import duckdb
-import logging
 from .debounce import debounce
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler, LoggingEventHandler
@@ -53,10 +52,6 @@ class DuckDatabase(Database):
 
         if directory:
             conn = create_directory_connection(directory)
-
-            logging.basicConfig(level=logging.INFO,
-                format='%(asctime)s - %(message)s',
-                datefmt='%Y-%m-%d %H:%M:%S')
 
             def reload():
                 self.conn.conn.close()
