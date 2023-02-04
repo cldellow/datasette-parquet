@@ -148,7 +148,7 @@ This is a loose journal of things I ran into:
   See https://github.com/duckdb/duckdb/issues/5938 and https://github.com/duckdb/duckdb/pull/3749
 
 - Datasette's CustomJSONEncoder only expects objects of the sort that SQLite can
-  store. DuckDB has native support the `date` type, which requires patching.
+  store. DuckDB has native support for the `date` type, which requires patching.
 
 ## Development
 
