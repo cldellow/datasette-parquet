@@ -134,7 +134,7 @@ class ProxyConnection:
         return ProxyCursor(self.conn)
 
 class DuckDatabase(Database):
-    def __init__(self, ds, directory=None, file=None):
+    def __init__(self, ds, directory=None, file=None, httpfs=None):
         super().__init__(ds)
 
         if directory:
@@ -149,8 +149,9 @@ class DuckDatabase(Database):
         else:
             raise Exception('must specify directory or file')
 
-        #print(conn.conn.execute('install httpfs;').fetchall())
-        #print(conn.conn.execute('load httpfs;').fetchall())
+        if httpfs:
+            conn.conn.execute('install httpfs;').fetchall()
+            conn.conn.execute('load httpfs;').fetchall()
 
         self.conn = conn
 

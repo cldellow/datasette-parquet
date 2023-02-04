@@ -5,7 +5,7 @@
 [![Tests](https://github.com/cldellow/datasette-parquet/workflows/Test/badge.svg)](https://github.com/cldellow/datasette-parquet/actions?query=workflow%3ATest)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/cldellow/datasette-parquet/blob/main/LICENSE)
 
-Support Parquet, CSV and [JSON Lines](https://jsonlines.org/) files in Datasette. Depends on DuckDB.
+Support DuckDB, Parquet, CSV and [JSON Lines](https://jsonlines.org/) files in Datasette. Depends on DuckDB.
 
 There is a demo at https://dux.fly.dev/parquet
 
@@ -20,16 +20,37 @@ Install this plugin in the same environment as Datasette.
 
 ## Usage
 
+You can use this plugin to access a DuckDB file, or a directory of CSV/Parquet/JSON files.
+
+### DuckDB file
+
+To mount the `/data/mydb.duckdb` file as a database called `mydb`, create a metadata.json like:
+
+```
+{
+  "plugins": {
+    "datasette-parquet": {
+      "mydb": {
+        "file": "/data/mydb.duckdb"
+      }
+    }
+  }
+}
+```
+
+
+### Directory of CSV/Parquet/JSON files
+
 Say you have a directory of your favourite CSVs, newline-delimited JSON and parquet
 files that looks like this:
 
 ```
-/mnt/files/census.csv
-/mnt/files/books.tsv
-/mnt/files/tweets.jsonl
-/mnt/files/geonames.parquet
-/mnt/files/sales/january.parquet
-/mnt/files/sales/february.parquet
+/data/census.csv
+/data/books.tsv
+/data/tweets.jsonl
+/data/geonames.parquet
+/data/sales/january.parquet
+/data/sales/february.parquet
 ```
 
 You can expose these in a Datasette database called `trove` by something
@@ -40,7 +61,7 @@ like this in your `metadata.json`:
   "plugins": {
     "datasette-parquet": {
       "trove": {
-        "directory": "/mnt/files"
+        "directory": "/data"
       }
     }
   }
@@ -51,6 +72,12 @@ Then launch Datasette via `datasette --metadata metadata.json`
 
 You will have 5 views in the `trove` database: `census`, `books`, `tweets`, `geonames` and `sales`.
 The `sales` view will be the union of all the files in that directory -- this works for all of the file types, not just Parquet.
+
+### Common options
+
+These options can be used in either mode.
+
+`httpfs` - set to `true` to enable the [HTTPFS extension](https://duckdb.org/docs/extensions/httpfs.html)
 
 ## Caveats
 
