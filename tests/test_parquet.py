@@ -1,6 +1,8 @@
 from datasette.app import Datasette
 from .create_db import create_dbs
 import pytest
+import duckdb
+from datasette_parquet.winging_it import ProxyConnection
 
 @pytest.fixture(scope="session")
 def datasette():
@@ -57,3 +59,9 @@ async def test_extraneous_parameters(datasette):
 async def test_duckdb_table(datasette):
     response = await datasette.client.get("/duckdb/fixtures")
     assert response.status_code == 200
+
+def test_fetchone():
+    raw_conn = duckdb.connect()
+    conn = ProxyConnection(raw_conn)
+    fetched = conn.execute('SELECT 1 AS col').fetchone()
+    assert fetched['col'] == 1

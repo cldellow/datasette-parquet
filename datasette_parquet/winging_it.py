@@ -67,7 +67,16 @@ class ProxyCursor:
         return rv
 
     def fetchone(self):
-        raise Exception('fetchone')
+        tpl = self.cursor.fetchone()
+
+        if not tpl:
+            return tpl
+
+        columns = {}
+        for i, x in enumerate(self.cursor.description):
+            columns[x[0]] = i
+
+        return Row(columns, tpl)
 
     def fetchmany(self, size=1):
         tpls = self.cursor.fetchmany(size)
