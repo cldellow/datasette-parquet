@@ -11,7 +11,7 @@ There is a demo at https://dux.fly.dev/parquet
 
 Compare a query using [Parquet on DuckDB](https://dux.fly.dev/parquet/geonames_stats) vs the same query on [SQLite](https://dux.fly.dev/geonames/geonames_stats). The DuckDB query is ~3-5x faster. On a machine with more than 1 core, DuckDB would outperform by an even higher margin.
 
-**This module was testing with duckdb 0.6.1. duckdb 0.7.0 seems to segfault?** If you have issues getting this to work, try pinning your duckdb version to 0.6.1.
+**This module was testing with duckdb 0.6.1. duckdb 0.7.0 seems to segfault -- see [duckdb#6315](https://github.com/duckdb/duckdb/issues/6315)** If you have issues getting this to work, try pinning your duckdb version to 0.6.1.
 
 ## Installation
 
