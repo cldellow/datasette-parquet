@@ -56,6 +56,12 @@ async def test_extraneous_parameters(datasette):
     assert response.status_code == 200
 
 @pytest.mark.asyncio
+async def test_sql_json(datasette):
+    response = await datasette.client.get("/trove.json?sql=select+%2A+from+fixtures&_hide_sql=1")
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
 async def test_duckdb_table(datasette):
     response = await datasette.client.get("/duckdb/fixtures")
     assert response.status_code == 200

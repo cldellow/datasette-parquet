@@ -1,4 +1,5 @@
 from datetime import date
+from .winging_it import Row
 
 def monkey_patch():
     from datasette.utils import CustomJSONEncoder
@@ -13,7 +14,8 @@ def monkey_patch():
         # ...but I think metadata should be a separate thing.
         if isinstance(obj, date):
             return obj.isoformat()
-
+        if isinstance(obj, Row):
+            return tuple(obj)
         return original_default(self, obj)
 
     CustomJSONEncoder.default = patched_default
