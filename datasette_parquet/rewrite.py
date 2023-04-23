@@ -2,6 +2,7 @@ import re
 import sqlglot
 import sqlite3
 table_xinfo_re = re.compile('^PRAGMA table_xinfo[(](.+)[)]')
+table_info_square_re = re.compile('^PRAGMA table_info[(]\[(.+)][)]')
 
 NO_OP_SQL = 'SELECT 0 WHERE 1 = 0'
 
@@ -52,6 +53,10 @@ def rewrite(sql):
     if m:
         sql = 'SELECT *, 0 FROM pragma_table_info({})'.format(m.group(1))
 
+    m = table_info_square_re.search(sql)
+    if m:
+        sql = 'PRAGMA table_info("{}")'.format(m.group(1))
+
     # DuckDB doesn't support this pragma.
     # Luckily, Parquet doesn't have foreign keys, so just return no rows
     if sql.startswith('PRAGMA foreign_key_list'):
@@ -60,6 +65,9 @@ def rewrite(sql):
     # DuckDB doesn't support this pragma.
     # Luckily, Parquet doesn't have indexes, so just return no rows
     if sql.startswith('PRAGMA index_list'):
+        sql = NO_OP_SQL
+
+    if sql.startswith('PRAGMA recursive_triggers'):
         sql = NO_OP_SQL
 
     # This is some query to discover if FTS is enabled?

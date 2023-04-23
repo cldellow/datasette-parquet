@@ -125,6 +125,7 @@ class ProxyConnection:
     def execute(self, sql, parameters=None):
         #print('! params={} sql={}'.format(parameters, sql))
         sql = rewrite(sql)
+        #print('! rewritten sql={}'.format(sql))
         sql, parameters = fixup_params(sql, parameters)
         #print('!! params={} sql={}'.format(parameters, sql))
         rv = self.conn.execute(sql, parameters)
