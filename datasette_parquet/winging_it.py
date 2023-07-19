@@ -90,8 +90,6 @@ class ProxyCursor:
 
         #print('## params={} sql={}'.format(parameters, sql))
         t = time.time()
-        rv = self.cursor.execute(sql, parameters)
-
         try:
             rv = self.cursor.execute(sql, parameters)
         except BinderException as ex:
