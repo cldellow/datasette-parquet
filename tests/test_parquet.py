@@ -71,3 +71,42 @@ def test_fetchone():
     conn = ProxyConnection(raw_conn)
     fetched = conn.execute('SELECT 1 AS col').fetchone()
     assert fetched['col'] == 1
+
+
+@pytest.mark.asyncio
+def test_catch_double_quote_usage_for_literal(datasette):
+
+    # copy a parquet file across from trove/userdata1.parquet
+    
+    import pathlib
+    import shutil
+    
+    
+    working_dir = pathlib.Path().cwd()
+    fixtures_dir = pathlib.Path().cwd() / 'fixtures' 
+    userdata1_path = pathlib.Path().cwd() / 'trove' / 'userdata1.parquet'
+    userdata_parquet_fixture_path = fixtures_dir / 'userdata1.parquet'
+    assert userdata1_path.exists()
+    
+    userdata_parquet_fixture_path.unlink(missing_ok=True)
+    assert not userdata_parquet_fixture_path.exists()
+
+    # with our watch taking place this should mean our parquet table is now accessible
+    shutil.copy(str(userdata1_path), str(fixtures_dir))
+
+    raw_conn = duckdb.connect()
+    conn = ProxyConnection(raw_conn)
+
+    # explodey_string_with_double_quotes = '''
+
+    # SELECT * from userdata1 WHERE first_name = "Amanda"
+
+    # '''
+    explodey_string_with_double_quotes = 'SELECT * from userdata1 WHERE first_name = "Amanda"'
+
+    # TODO: add assert for exception being thrown
+    # breakpoint()
+    result = conn.execute(explodey_string_with_double_quotes).fetchall()
+    
+    
+
