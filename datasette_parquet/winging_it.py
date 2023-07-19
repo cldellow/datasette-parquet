@@ -1,9 +1,37 @@
 import time
+import re
+import typing
+
+from duckdb import BinderException 
+
 from .rewrite import rewrite, NO_OP_SQL
+from . import exceptions
+
+
+# a regular expression to find the literal wrapped by the double quoted string
+# GOOD for DuckDB, works fine:  
+# `WHERE column = 'some value'` 
+# 
+# BAD for DuckDB, triggers duckdb.BinderException:
+# `WHERE column = "some value"` 
+DOUBLE_QUOTES_AROUND_LITERALS_PATTERN = r'(?<![A-Za-z0-9_])"(?:[^"]*(?:"[^"]*)*[^"]*)"(?![A-Za-z0-9_])' # noqa
+
+def find_matching_double_quote_usage(ex: BinderException) -> typing.List[str]:
+    """
+    Accepts a BinderException from DuckDB, and returns a list of
+    matching strings in double quotes
+    """
+    # should return 'Binder Error: Referenced column "LITERAL_IN_DOUBLE_QUOTES" '
+    referenced_column_message = ex.args[0].split(' not found in FROM clause')[0]
+    pattern = DOUBLE_QUOTES_AROUND_LITERALS_PATTERN
+
+    # find the offending values wrapped in double quotes
+    matches = re.findall(pattern, referenced_column_message)
+    return matches
+
 
 # A collection of classes to provide a facade that mimics the sqlite3 DB-API
 # interface.
-
 class Row:
     def __init__(self, columns, tpl):
         self.columns = columns
@@ -63,6 +91,17 @@ class ProxyCursor:
         #print('## params={} sql={}'.format(parameters, sql))
         t = time.time()
         rv = self.cursor.execute(sql, parameters)
+
+        try:
+            rv = self.cursor.execute(sql, parameters)
+        except BinderException as ex:
+            matches = find_matching_double_quote_usage(ex)
+            if matches:
+                raise exceptions.DoubleQuoteForLiteraValue(matches)
+            else:
+                # continue raising the original BinderException
+                raise
+
         #print('took {}'.format(time.time() - t))
         return rv
 
@@ -128,8 +167,16 @@ class ProxyConnection:
         #print('! rewritten sql={}'.format(sql))
         sql, parameters = fixup_params(sql, parameters)
         #print('!! params={} sql={}'.format(parameters, sql))
-        rv = self.conn.execute(sql, parameters)
-
+        try:
+            rv = self.conn.execute(sql, parameters)
+        except BinderException as ex:
+            matches = find_matching_double_quote_usage(ex)
+            if matches:
+                raise exceptions.DoubleQuoteForLiteraValue(matches)
+            else:
+                # continue raising the original BinderException
+                raise
+            
         return ProxyCursor(self.conn, rv)
 
     def fetchall(self):

@@ -3,6 +3,7 @@ from .create_db import create_dbs
 import pytest
 import duckdb
 from datasette_parquet.winging_it import ProxyConnection
+from datasette_parquet import exceptions
 
 @pytest.fixture(scope="session")
 def datasette():
@@ -76,37 +77,11 @@ def test_fetchone():
 @pytest.mark.asyncio
 def test_catch_double_quote_usage_for_literal(datasette):
 
-    # copy a parquet file across from trove/userdata1.parquet
-    
-    import pathlib
-    import shutil
-    
-    
-    working_dir = pathlib.Path().cwd()
-    fixtures_dir = pathlib.Path().cwd() / 'fixtures' 
-    userdata1_path = pathlib.Path().cwd() / 'trove' / 'userdata1.parquet'
-    userdata_parquet_fixture_path = fixtures_dir / 'userdata1.parquet'
-    assert userdata1_path.exists()
-    
-    userdata_parquet_fixture_path.unlink(missing_ok=True)
-    assert not userdata_parquet_fixture_path.exists()
-
-    # with our watch taking place this should mean our parquet table is now accessible
-    shutil.copy(str(userdata1_path), str(fixtures_dir))
-
     raw_conn = duckdb.connect()
     conn = ProxyConnection(raw_conn)
 
-    # explodey_string_with_double_quotes = '''
-
-    # SELECT * from userdata1 WHERE first_name = "Amanda"
-
-    # '''
+    # try reading the parquet file in trove/userdata1.parquet
     explodey_string_with_double_quotes = 'SELECT * from "./trove/userdata1.parquet" WHERE first_name = "Amanda"'
 
-    # TODO: add assert for exception being thrown
-    # breakpoint()
-    result = conn.execute(explodey_string_with_double_quotes).fetchall()
-    
-    
-
+    with pytest.raises(exceptions.DoubleQuoteForLiteraValue):
+        result = conn.execute(explodey_string_with_double_quotes).fetchall()
