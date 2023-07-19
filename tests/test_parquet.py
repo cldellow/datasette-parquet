@@ -102,7 +102,7 @@ def test_catch_double_quote_usage_for_literal(datasette):
     # SELECT * from userdata1 WHERE first_name = "Amanda"
 
     # '''
-    explodey_string_with_double_quotes = 'SELECT * from userdata1 WHERE first_name = "Amanda"'
+    explodey_string_with_double_quotes = 'SELECT * from "./trove/userdata1.parquet" WHERE first_name = "Amanda"'
 
     # TODO: add assert for exception being thrown
     # breakpoint()
