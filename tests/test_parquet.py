@@ -3,6 +3,7 @@ from .create_db import create_dbs
 import pytest
 import duckdb
 from datasette_parquet.winging_it import ProxyConnection
+from datasette_parquet import exceptions
 
 @pytest.fixture(scope="session")
 def datasette():
@@ -71,3 +72,16 @@ def test_fetchone():
     conn = ProxyConnection(raw_conn)
     fetched = conn.execute('SELECT 1 AS col').fetchone()
     assert fetched['col'] == 1
+
+
+@pytest.mark.asyncio
+def test_catch_double_quote_usage_for_literal(datasette):
+
+    raw_conn = duckdb.connect()
+    conn = ProxyConnection(raw_conn)
+
+    # try reading the parquet file in trove/userdata1.parquet
+    explodey_string_with_double_quotes = 'SELECT * from "./trove/userdata1.parquet" WHERE first_name = "Amanda"'
+
+    with pytest.raises(exceptions.DoubleQuoteForLiteraValue):
+        result = conn.execute(explodey_string_with_double_quotes).fetchall()
